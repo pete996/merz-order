@@ -50,6 +50,9 @@ section.card.attn { border-color: var(--red); box-shadow: 0 0 0 3px rgba(152, 31
 .step .n { flex: 0 0 auto; width: 26px; height: 26px; border-radius: 50%; background: var(--red); color: #fff; font: 600 14px/26px var(--body); text-align: center; transform: translateY(-2px); }
 .step h2 { font-family: var(--display); font-weight: 400; font-size: 21px; line-height: 1.2; margin: 0; }
 .sub { color: var(--muted); margin: 0 0 14px; font-size: 15px; }
+.sub.strong { color: var(--ink); font-weight: 600; margin-bottom: 4px; }
+.sub + .sub:not(.strong) { margin-top: -8px; }
+.sub.strong + .sub { margin-top: 0; }
 .usual { margin: 0 0 16px; padding: 10px 12px; border-radius: 10px; background: var(--shade); font-size: 15px; }
 .usual b { display: block; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin-bottom: 2px; }
 fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
@@ -343,7 +346,13 @@ footer a { color: var(--red); }
     var o = state.stores[storeKey(s)];
     var card = el("section", {class: "card", id: "thu-" + s.aid});
     card.appendChild(stepHead(n, "Your Thursday order"));
-    card.appendChild(el("p", {class: "sub", text: "No regular " + (s.pickup ? "pickups" : "deliveries") + " on Thanksgiving Day, Thu 11/26. Tell us where this order goes, or we'll skip it that week."}));
+    if (s.thursday.options.some(function (x) { return x.k === "thu"; })) {      // the run stores (Pete 11/6: don't say "no deliveries" to them)
+      card.appendChild(el("p", {class: "sub", text: "If you'd like a delivery on Thanksgiving Day, Thu 11/26, keep it on Thursday and it comes on our small morning run."}));
+      card.appendChild(el("p", {class: "sub", text: "Or move it to another day, or skip it. No answer means no Thursday delivery."}));
+    } else {                                                                     // everyone else: no Thursday, period
+      card.appendChild(el("p", {class: "sub strong", text: "No " + (s.pickup ? "pickups" : "deliveries") + " on Thanksgiving Day, Thu 11/26."}));
+      card.appendChild(el("p", {class: "sub", text: "Tell us where this order goes, or we'll skip it that week."}));
+    }
     card.appendChild(el("div", {class: "usual"}, [el("b", {text: s.pickup ? "You usually pick up" : "You usually get"}), s.thursday.usual]));
     var fs = el("fieldset", {}, [el("legend", {text: s.pickup ? "When do you want to pick it up?" : "Where should it go?"})]);
     var opts = el("div", {class: "opts" + (s.thursday.options.length === 4 ? " two" : "")});
@@ -446,14 +455,6 @@ footer a { color: var(--red); }
     var squashDays = (s.items.filter(function (i) { return i.k === "squash"; })[0] || {}).days || [];
     if (squashDays.length && squashDays.length < s.days.length) card.appendChild(el("p", {class: "note", text: "Squash sourdough isn't available every day of that week."}));
     if (rollsShut) card.appendChild(el("p", {class: "note", text: "Roll orders closed " + fmtDeadline(P.deadlines.rolls) + ". Call " + phone() + " and we'll try."}));
-    card.appendChild(el("div", {class: "total", id: "total-" + s.aid, hidden: true}));
-    if (s.last_year) {
-      var ly = [];
-      if (s.last_year.gh) ly.push(s.last_year.gh + " dz Garlic & Herb rolls");
-      if (s.last_year.sp) ly.push(s.last_year.sp + " dz Sweet Potato rolls");
-      if (s.last_year.squash) ly.push(s.last_year.squash + " butternut sourdough loaves");
-      if (ly.length) card.appendChild(el("p", {class: "lastyear"}, [el("b", {text: "Last Thanksgiving week "}), (P.stores.length > 1 ? "this store" : "you") + " took " + joinList(ly) + "."]));
-    }
     setTimeout(function () { updateTotal(s); }, 0);
     return card;
   }
