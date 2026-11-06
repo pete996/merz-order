@@ -205,6 +205,9 @@ footer a { color: var(--red); }
     P.stores.forEach(function (s) {
       var o = {thu: null, thuNote: "", qty: {}, sample: null, extraDays: []};
       s.items.forEach(function (it) { o.qty[it.k] = {}; it.days.forEach(function (d) { o.qty[it.k][d] = it.standing[d] || 0; }); });
+      if (s.preorder) s.items.forEach(function (it) {                 // an order they already sent us by email
+        var q = (s.preorder.qty || {})[it.k] || {}; for (var d in q) if (it.days.indexOf(d) >= 0) o.qty[it.k][d] = q[d];
+      });
       st.stores[storeKey(s)] = o;
     });
     return st;
@@ -382,6 +385,7 @@ footer a { color: var(--red); }
     var card = el("section", {class: "card", id: "grid-" + s.aid});
     card.appendChild(stepHead(n, "Holiday squash & rolls"));
     card.appendChild(el("p", {class: "sub", text: "How many do you want each day? We filled in what's already on your standing order. Change any number."}));
+    if (s.preorder && s.preorder.note) card.appendChild(el("div", {class: "banner", style: "margin:0 0 12px", text: s.preorder.note}));
     var tbl = el("table", {class: "grid"});
     var hr = el("tr", {}, [el("th", {class: "day", scope: "col"}, [el("span", {class: "sr", text: "Day"})])]);
     s.items.forEach(function (it) {
