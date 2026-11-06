@@ -431,7 +431,7 @@ footer a { color: var(--red); }
       card.appendChild(add);
     }
     var squashDays = (s.items.filter(function (i) { return i.k === "squash"; })[0] || {}).days || [];
-    if (squashDays.length && squashDays.length < s.days.length) card.appendChild(el("p", {class: "note", text: "Squash sourdough is baked for Mon, Wed, Fri and Sat deliveries."}));
+    if (squashDays.length && squashDays.length < s.days.length) card.appendChild(el("p", {class: "note", text: "Squash sourdough isn't available every day of that week."}));
     if (rollsShut) card.appendChild(el("p", {class: "note", text: "Roll orders closed " + fmtDeadline(P.deadlines.rolls) + ". Call " + phone() + " and we'll try."}));
     card.appendChild(el("div", {class: "total", id: "total-" + s.aid, hidden: true}));
     if (s.last_year) {
