@@ -101,6 +101,9 @@ textarea, input.text { width: 100%; font: 16px/1.4 var(--body); color: var(--ink
 textarea { min-height: 84px; resize: vertical; }
 textarea:focus, input.text:focus { outline: none; border-color: var(--red); box-shadow: 0 0 0 3px rgba(152, 31, 31, .15); }
 .row2 { display: grid; gap: 14px; }
+.thunote-wrap { margin-top: 16px; }
+.thunote-wrap textarea { min-height: 64px; }
+.opt-tag { font-weight: 400; font-size: 13px; color: var(--muted); }
 .next { display: flex; justify-content: flex-end; margin: 4px 0 0; }
 .btn { font: 600 16px var(--body); border: 0; border-radius: 12px; padding: 14px 20px; cursor: pointer; min-height: 50px; }
 .btn.primary { background: var(--red); color: #fff; width: 100%; }
@@ -200,7 +203,7 @@ footer a { color: var(--red); }
   function blankState() {
     var st = {name: (P.greeting && P.greeting !== "there" && P.greeting.indexOf(" and ") < 0 && P.greeting.indexOf(",") < 0) ? P.greeting : "", note: "", stores: {}};
     P.stores.forEach(function (s) {
-      var o = {thu: null, qty: {}, sample: null, extraDays: []};
+      var o = {thu: null, thuNote: "", qty: {}, sample: null, extraDays: []};
       s.items.forEach(function (it) { o.qty[it.k] = {}; it.days.forEach(function (d) { o.qty[it.k][d] = it.standing[d] || 0; }); });
       st.stores[storeKey(s)] = o;
     });
@@ -212,7 +215,7 @@ footer a { color: var(--red); }
     P.stores.forEach(function (s) {
       var got = (a.stores || {})[storeKey(s)], o = st.stores[storeKey(s)];
       if (!got) return;
-      o.thu = got.thu || null; o.sample = got.sample || null;
+      o.thu = got.thu || null; o.thuNote = got.thuNote || ""; o.sample = got.sample || null;
       s.items.forEach(function (it) { var q = (got.qty || {})[it.k] || {}; it.days.forEach(function (d) { if (q[d] != null) o.qty[it.k][d] = q[d]; }); });
     });
     return st;
@@ -356,6 +359,12 @@ footer a { color: var(--red); }
       opts.appendChild(el("label", {class: "opt", for: id}, [input, el("span", {class: "dot", "aria-hidden": "true"}), el("span", {}, [el("span", {class: "t", text: title}), el("span", {class: "s", text: sub})])]));
     });
     fs.appendChild(opts); card.appendChild(fs);
+    var nid = "thunote-" + s.aid;
+    var note = el("textarea", {id: nid, class: "thunote", maxlength: "500", rows: "2",
+      placeholder: s.pickup ? "Like: we'll grab it Wednesday afternoon" : "Like: just the baguettes on Wednesday, skip the rest"});
+    note.value = o.thuNote || "";
+    note.addEventListener("input", function () { o.thuNote = note.value; saveDraft(); });
+    card.appendChild(el("div", {class: "thunote-wrap"}, [el("label", {class: "field", for: nid}, ["Anything we should know? ", el("span", {class: "opt-tag", text: "Optional"})]), note]));
     return card;
   }
   function hasUsual(s, iso) { return s.days.some(function (d) { return d.d === iso && d.usual; }); }
@@ -541,7 +550,7 @@ footer a { color: var(--red); }
     P.stores.forEach(function (s) {
       var o = state.stores[storeKey(s)], q = {};
       s.items.forEach(function (it) { q[it.k] = {}; it.days.forEach(function (d) { q[it.k][d] = itemQty(s, it, d); }); });
-      out.stores[storeKey(s)] = {thu: o.thu, qty: q, sample: o.sample};
+      out.stores[storeKey(s)] = {thu: o.thu, thuNote: (o.thuNote || "").trim(), qty: q, sample: o.sample};
     });
     return out;
   }
@@ -586,6 +595,7 @@ footer a { color: var(--red); }
     if (s.thursday) {
       var op = s.thursday.options.filter(function (x) { return x.k === o.thu; })[0];
       out.push(["Thursday order", op ? op.short.replace("Moved to", "Moving to").replace("Skip", "Skipping it") : "Cancelled (no answer)"]);
+      if (o.thuNote) out.push(["Your Thursday note", o.thuNote]);
     }
     s.items.forEach(function (it) {
       var bits = [];
