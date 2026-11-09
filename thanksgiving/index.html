@@ -59,6 +59,8 @@ nav.stores button[aria-current="true"] { background: var(--red); border-color: v
 nav.stores button .ok { color: var(--green); margin-left: 6px; }
 nav.stores button[aria-current="true"] .ok { color: #fff; }
 .store-name { font-family: var(--display); font-size: 22px; margin: 18px 2px 4px; }
+.store-addr { color: var(--muted); font-size: 14px; margin: -2px 2px 4px; }
+.hello p.addr { margin-top: 6px; font-size: 14px; }
 section.card { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 18px 16px; margin: 14px 0; }
 section.card.attn { border-color: var(--red); box-shadow: 0 0 0 3px rgba(152, 31, 31, .12); }
 .step { display: flex; align-items: baseline; gap: 10px; margin: 0 0 6px; }
@@ -304,7 +306,8 @@ footer a { color: var(--red); }
       el("div", {class: "eyebrow", text: "Thanksgiving week · Nov 22 – 28"}),
       el("h1", {text: "Hi " + P.greeting + "."}),
       el("p", {text: multi ? count + " per store for Thanksgiving week. A minute or two and you're done."
-                           : count + " for " + possessive(P.title) + " Thanksgiving week. About a minute and you're done."})
+                           : count + " for " + possessive(P.title) + " Thanksgiving week. About a minute and you're done."}),
+      multi ? null : whereLine(P.stores[0], "addr")
     ]);
     app.appendChild(hello);
     app.appendChild(renderWhen());
@@ -339,7 +342,11 @@ footer a { color: var(--red); }
       el("a", {class: "pdf", href: run ? "calendar-run.pdf" : "calendar-regular.pdf", target: "_blank", rel: "noopener", text: "Print the calendar (PDF)"})
     ]);
   }
-  function possessive(t) { return /s$/i.test(t) && !/'s$/.test(t) ? t + "'" : t + "'s"; }
+  function possessive(t) { return /'s$/.test(t) ? t : /s$/i.test(t) ? t + "'" : t + "'s"; }   // Bruno's, never Bruno's's
+  function whereLine(s, cls) {                           // 11/9: which place this is (the address), so a renamed or co-owned store is clear
+    if (s.pickup) return el("p", {class: cls, text: "Pickup at our bakery"});
+    return s.addr ? el("p", {class: cls, text: "Delivering to " + s.addr}) : null;
+  }
   function joinList(a) { return a.length < 2 ? a.join("") : a.slice(0, -1).join(", ") + " and " + a[a.length - 1]; }
   function storeDone(s) { return !s.thursday || !!state.stores[storeKey(s)].thu; }
   function show(i, scroll) {
@@ -357,7 +364,11 @@ footer a { color: var(--red); }
 
   function renderStore(s, i, multi) {
     var box = el("div", {"data-store": i, hidden: multi && i !== current});
-    if (multi) box.appendChild(el("div", {class: "store-name", text: s.name}));
+    if (multi) {
+      box.appendChild(el("div", {class: "store-name", text: s.name}));
+      var where = whereLine(s, "store-addr");
+      if (where) box.appendChild(where);
+    }
     var step = 1;
     if (s.thursday) box.appendChild(renderThursday(s, step++));
     box.appendChild(renderGrid(s, step++));
