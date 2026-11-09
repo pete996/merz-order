@@ -33,6 +33,9 @@ header.top img { width: min(260px, 70vw); height: auto; display: block; margin: 
 .when { margin: 18px 0 6px; background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 16px 14px 12px; }
 .when .big { font-family: var(--display); font-size: clamp(21px, 6vw, 26px); line-height: 1.15; color: var(--red); margin: 0; text-align: center; }
 .when .for { margin: 4px 0 0; text-align: center; font-size: 14px; color: var(--muted); }
+.when .early { margin: 12px 0 10px; padding: 10px 12px; border-left: 4px solid var(--red); background: rgba(152, 31, 31, .06); border-radius: 6px; font-size: 15px; line-height: 1.4; }
+.when .early b.h { display: block; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--red); margin-bottom: 2px; }
+.when .early span.so { display: block; margin-top: 4px; color: var(--muted); font-size: 14px; }
 .when .rolls { margin: 2px 0 0; text-align: center; font-size: 14px; color: var(--ink); }
 .when .rolls b { color: var(--red); font-weight: 600; }
 table.mini { width: 100%; border-collapse: collapse; table-layout: fixed; margin: 14px 0 0; }
@@ -337,10 +340,27 @@ footer a { color: var(--red); }
     return el("section", {class: "when", "aria-label": "Deadlines"}, [
       el("p", {class: "big", text: "Order by " + fmtDeadline(P.deadlines.all)}),
       el("p", {class: "for", text: "for every delivery Sun 11/22 to Fri 11/27 (shaded)"}),
+      renderEarly(),
       closedRolls() ? null : el("p", {class: "rolls"}, ["Holiday rolls by ", el("b", {text: fmtDeadline(P.deadlines.rolls)})]),
       t,
       el("a", {class: "pdf", href: run ? "calendar-run.pdf" : "calendar-regular.pdf", target: "_blank", rel: "noopener", text: "Print the calendar (PDF)"})
     ]);
+  }
+  function renderEarly() {                               // 11/9 Pete: say plainly the deadline is EARLIER than usual (normally 1 PM two days before)
+    var WD = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    function lab(iso, back) { var t = new Date(iso + "T12:00:00Z"); t.setUTCDate(t.getUTCDate() - (back || 0)); return WD[t.getUTCDay()] + " " + (t.getUTCMonth() + 1) + "/" + t.getUTCDate(); }
+    var last = null, pick = false;                     // the store's latest usual day Sun 11/22 - Fri 11/27, Thursday left out
+    P.stores.forEach(function (s) {
+      (s.days || []).forEach(function (d) {
+        if (d.usual && d.d >= "2026-11-23" && d.d <= "2026-11-27" && d.d !== "2026-11-26" && (!last || d.d > last)) { last = d.d; pick = !!s.pickup; }
+      });
+    });
+    var anyThu = P.stores.some(function (s) { return !!s.thursday; });
+    var main = last
+      ? "Your " + lab(last) + " " + (pick ? "pickup" : "order") + " would normally close " + lab(last, 2) + ". This week, every order and change is due Fri 11/20 at 1 PM."
+      : "Normally you can order until 1 PM two days before delivery. This week, every order and change for Sun 11/22 to Fri 11/27 is due Fri 11/20 at 1 PM.";
+    var so = anyThu ? "Standing orders still come as usual, except Thursday's (see below)." : "Standing orders still come as usual.";
+    return el("p", {class: "early"}, [el("b", {class: "h", text: "Earlier than usual"}), main, el("span", {class: "so", text: so})]);
   }
   function possessive(t) { return /'s$/.test(t) ? t : /s$/i.test(t) ? t + "'" : t + "'s"; }   // Bruno's, never Bruno's's
   function whereLine(s, cls) {                           // 11/9: which place this is (the address), so a renamed or co-owned store is clear
